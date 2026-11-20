@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>黑客松赛前速成 · 大模型与智能体基础</title>
+<style>
+:root{
+  --bg:#0b1220; --panel:#141f38; --panel2:#1a2745; --line:#2a3854;
+  --ink:#eaf0fb; --muted:#8b97b0; --accent:#00c8e0; --accent-d:#007a94;
+  --green:#2fbf71; --red:#e5484d; --amber:#f5a623; --violet:#a78bfa;
+  --mono:"Consolas","SFMono-Regular",Menlo,monospace;
+  --sans:"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7}
+.wrap{max-width:1060px;margin:0 auto;padding:0 22px}
+
+/* ---------- nav ---------- */
+.topnav{position:sticky;top:0;z-index:99;background:rgba(11,18,32,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topnav .wrap{display:flex;align-items:center;gap:4px;height:52px;overflow-x:auto;scrollbar-width:none}
+.topnav .wrap::-webkit-scrollbar{display:none}
+.brand{font-family:var(--mono);font-weight:700;color:var(--accent);font-size:13px;margin-right:14px;white-space:nowrap}
+.topnav a{color:var(--muted);text-decoration:none;font-size:13px;padding:6px 11px;border-radius:6px;white-space:nowrap}
+.topnav a:hover{color:var(--ink);background:var(--panel2)}
+
+/* ---------- hero ---------- */
+.hero{padding:64px 0 40px;border-bottom:1px solid var(--line);
+  background:
+    radial-gradient(700px 300px at 15% 0%, rgba(0,200,224,.09), transparent 60%),
+    radial-gradient(600px 280px at 90% 20%, rgba(167,139,250,.06), transparent 60%);}
+.hero .kicker{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:.2em;margin-bottom:14px}
+.hero h1{font-size:clamp(28px,4.5vw,44px);line-height:1.25;font-weight:700}
+.hero h1 .hl{color:var(--accent)}
+.hero p.lead{color:var(--muted);max-width:640px;margin-top:16px;font-size:15.5px}
+.hero .stats{display:flex;gap:12px;margin-top:26px;flex-wrap:wrap}
+.hero .stat{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:10px 18px}
+.hero .stat b{font-family:var(--mono);font-size:20px;color:var(--accent)}
+.hero .stat span{display:block;font-size:12px;color:var(--muted)}
+
+/* ---------- sections ---------- */
+section{padding:56px 0;border-bottom:1px solid var(--line)}
+.kicker{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.18em;margin-bottom:8px}
+.sec-title{font-size:26px;font-weight:700;margin-bottom:10px}
+.sec-desc{color:var(--muted);font-size:15px;max-width:760px;margin-bottom:24px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px}
+.card h3{font-size:16px;margin-bottom:12px}
+.card h3 .tag{font-family:var(--mono);font-size:11px;color:var(--accent);border:1px solid var(--accent-d);border-radius:4px;padding:1px 7px;margin-left:8px;vertical-align:2px}
+.note{font-size:13px;color:var(--muted);margin-top:14px}
+.note b{color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:860px){.grid2,.grid4{grid-template-columns:1fr}}
+
+/* ---------- buttons & inputs ---------- */
+.btn{display:inline-block;background:var(--accent);color:#06202a;border:none;border-radius:7px;
+  padding:9px 20px;font-size:14px;font-weight:700;font-family:var(--sans);cursor:pointer;transition:filter .15s}
+.btn:hover{filter:brightness(1.12)}
+.btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent-d)}
+.btn.sm{padding:6px 14px;font-size:13px}
+input[type=text],textarea{width:100%;background:#0d1628;border:1px solid var(--line);border-radius:8px;
+  color:var(--ink);font-family:var(--sans);font-size:14px;padding:10px 12px;resize:vertical}
+textarea:focus,input:focus{outline:none;border-color:var(--accent-d)}
+input[type=range]{accent-color:var(--accent);width:100%}
+label.param-lb{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin:12px 0 4px}
+label.param-lb b{font-family:var(--mono);color:var(--accent);font-size:14px}
+
+/* ---------- token chips ---------- */
+.tk{display:inline-block;margin:2.5px;padding:2px 7px;border-radius:5px;font-size:14px;line-height:1.5;
+  border:1px solid transparent;cursor:default;transition:transform .12s}
+.tk:hover{transform:translateY(-2px)}
+.tk .tid{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.55);margin-left:4px}
+.tk-stream{animation:flash .5s ease-out}
+@keyframes flash{0%{background:rgba(0,200,224,.45)}100%{background:transparent}}
+.tk-empty{color:var(--muted);font-size:13px;font-style:italic}
+
+/* ---------- probability bars ---------- */
+.bar-row{display:grid;grid-template-columns:110px 1fr 64px;gap:10px;align-items:center;margin:7px 0;cursor:pointer}
+.bar-row .lb{font-size:14px;text-align:right;color:var(--ink)}
+.bar-row .tr{height:22px;background:#0d1628;border-radius:4px;overflow:hidden}
+.bar-row .fl{height:100%;background:linear-gradient(90deg,var(--accent-d),var(--accent));
+  border-radius:4px;transition:width .35s ease, opacity .3s}
+.bar-row .pc{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.bar-row.dim{opacity:.32}
+.bar-row.dim .fl{background:#5a667c}
+.bar-row:hover .lb{color:var(--accent)}
+
+/* ---------- pipeline ---------- */
+.psteps{display:flex;gap:0;flex-wrap:wrap;margin:6px 0 18px}
+.pstep{flex:1;min-width:118px;text-align:center;position:relative;padding:10px 6px 12px;
+  border:1px solid var(--line);border-radius:8px;margin-right:26px;background:var(--panel2);margin-bottom:10px}
+.pstep:last-child{margin-right:0}
+.pstep:after{content:"→";position:absolute;right:-22px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px}
+.pstep:last-child:after{content:""}
+.pstep .ico{font-size:19px;font-family:var(--mono);color:var(--accent)}
+.pstep .nm{font-size:12.5px;color:var(--ink);margin-top:3px}
+.pstep .en{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.pstep.on{border-color:var(--accent);background:#0f2b36;box-shadow:0 0 0 1px var(--accent-d) inset}
+.pstep.done{border-color:var(--green)}
+.pstep.done .ico{color:var(--green)}
+
+/* ---------- chat ---------- */
+.chat{background:#0d1628;border:1px solid var(--line);border-radius:10px;padding:16px;min-height:120px;margin-top:14px}
+.msg{border-radius:9px;padding:10px 14px;margin-bottom:10px;font-size:14.5px;max-width:88%}
+.msg .who{font-family:var(--mono);font-size:11px;letter-spacing:.1em;margin-bottom:4px;display:block}
+.msg.user{background:var(--panel2);border:1px solid var(--line);margin-left:auto}
+.msg.user .who{color:var(--violet)}
+.msg.assistant{background:var(--panel);border:1px solid var(--accent-d)}
+.msg.assistant .who{color:var(--accent)}
+.msg pre{font-family:var(--mono);font-size:13px;line-height:1.6;background:#0b1220;border:1px solid var(--line);
+  border-radius:7px;padding:12px;overflow-x:auto;margin-top:6px;white-space:pre-wrap}
+.kw{color:var(--accent)} .st{color:var(--amber)} .nm2{color:var(--violet)} .cm{color:var(--muted)}
+.caret{display:inline-block;width:8px;height:16px;background:var(--accent);vertical-align:-2px;animation:blink .8s infinite}
+@keyframes blink{50%{opacity:0}}
+.chat-stats{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:8px}
+
+/* ---------- tables ---------- */
+table.params{width:100%;border-collapse:collapse;font-size:13.5px}
+table.params th{text-align:left;font-family:var(--mono);font-size:12px;color:var(--accent);
+  border-bottom:1px solid var(--line);padding:8px 10px}
+table.params td{border-bottom:1px solid #1c2942;padding:8px 10px;color:var(--ink);vertical-align:top}
+table.params td:first-child{font-family:var(--mono);color:var(--amber);white-space:nowrap}
+table.params td:nth-child(2){color:var(--muted)}
+
+/* ---------- concept cards ---------- */
+.ccard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;cursor:pointer;
+  transition:border-color .2s, transform .2s;position:relative}
+.ccard:hover{border-color:var(--accent-d);transform:translateY(-3px)}
+.ccard.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent-d)}
+.ccard .en{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.12em}
+.ccard h3{font-size:18px;margin:6px 0 8px}
+.ccard p{font-size:13px;color:var(--muted)}
+.ccard . analogy{color:var(--amber)}
+.cdetail{background:var(--panel2);border:1px solid var(--accent-d);border-radius:10px;padding:16px 20px;
+  margin-top:16px;font-size:14px;color:var(--ink);display:none}
+.cdetail.show{display:block}
+.cdetail .t{font-family:var(--mono);color:var(--accent);font-size:12px;margin-bottom:6px}
+
+/* ---------- agent loop ---------- */
+.loopbox{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.astep{display:flex;gap:12px;border-radius:10px;padding:12px 16px;border:1px solid var(--line);
+  background:var(--panel2);opacity:0;transform:translateY(8px);transition:all .35s}
+.astep.show{opacity:1;transform:none}
+.astep .ico{font-family:var(--mono);font-weight:700;font-size:12px;min-width:74px;padding-top:2px}
+.astep .bd{flex:1;font-size:13.5px}
+.astep .bd .h{font-weight:700;font-size:14px;margin-bottom:3px}
+.astep .bd pre{font-family:var(--mono);font-size:12px;background:#0b1220;border:1px solid var(--line);
+  border-radius:6px;padding:8px 10px;margin-top:6px;white-space:pre-wrap;color:#bfe9f0}
+.astep.thought{border-left:3px solid var(--violet)} .astep.thought .ico{color:var(--violet)}
+.astep.action{border-left:3px solid var(--accent)} .astep.action .ico{color:var(--accent)}
+.astep.obs{border-left:3px solid var(--amber)} .astep.obs .ico{color:var(--amber)}
+.astep.user{border-left:3px solid var(--ink)} .astep.user .ico{color:var(--ink)}
+.astep.final{border-left:3px solid var(--green);background:#0f2b24} .astep.final .ico{color:var(--green)}
+
+/* ---------- quiz ---------- */
+.q{margin-bottom:22px}
+.q .qt{font-size:15px;font-weight:700;margin-bottom:10px}
+.q .qt .qn{font-family:var(--mono);color:var(--accent);margin-right:8px}
+.opt{display:block;width:100%;text-align:left;background:var(--panel2);border:1px solid var(--line);
+  color:var(--ink);border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:14px;
+  font-family:var(--sans);cursor:pointer;transition:all .15s}
+.opt:hover{border-color:var(--accent-d)}
+.opt.correct{border-color:var(--green);background:#0f2b24}
+.opt.wrong{border-color:var(--red);background:#2b1216}
+.opt:disabled{cursor:default}
+.q .fb{font-size:13px;margin-top:6px;display:none}
+.q .fb.show{display:block}
+.q .fb.ok{color:var(--green)} .q .fb.no{color:var(--red)}
+#quizScore{font-size:16px;font-weight:700;color:var(--accent);margin-top:6px;display:none}
+#quizScore.show{display:block}
+
+footer{padding:44px 0 60px;color:var(--muted);font-size:13px;text-align:center}
+footer b{color:var(--accent)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="wrap">
+    <span class="brand">REN'AI HACKATHON 2026</span>
+    <a href="#llm">01 LLM</a>
+    <a href="#params">02 参数</a>
+    <a href="#token">03 Token</a>
+    <a href="#pipeline">04 输入输出</a>
+    <a href="#agent">05 Agent 生态</a>
+    <a href="#quiz">06 随堂小测</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">PRE-EVENT TRAINING · 赛前速成</div>
+    <h1>大模型与智能体基础<br><span class="hl">看得见、摸得着</span>的 15 分钟</h1>
+    <p class="lead">为「创熠」AI聚变黑客松准备的赛前热身：不讲数学公式，把 LLM、温度、Token、Agent、Skill、MCP、Harness
+      全部做成可以动手玩的演示。你看懂了这一页，比赛里调参数就不慌了。</p>
+    <div class="stats">
+      <div class="stat"><b>6</b><span>核心概念</span></div>
+      <div class="stat"><b>5</b><span>交互演示</span></div>
+      <div class="stat"><b>0</b><span>编程门槛</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= 01 LLM ================= -->
+<section id="llm">
+  <div class="wrap">
+    <div class="kicker">MODULE 01</div>
+    <h2 class="sec-title">LLM：一个超大号的「下一词预测器」</h2>
+    <p class="sec-desc">大语言模型（Large Language Model）的本质出奇地简单：读过几乎整个互联网的文本后，
+      它学会了一件事——<b style="color:var(--ink)">给定前文，预测下一个 token 的概率分布</b>。
+      写代码、写诗、答题，都是这一件事的重复。下面亲手试试。</p>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>下一词预测器<span class="tag">LIVE</span></h3>
+        <p style="font-size:14px;margin-bottom:14px">模型看到的前文：</p>
+        <p id="llmCtx" style="font-family:var(--mono);font-size:17px;background:#0d1628;border:1px solid var(--line);
+          border-radius:8px;padding:10px 14px;margin-bottom:16px">夜空中的星星非常<span class="caret"></span></p>
+        <div id="llmBars"></div>
+        <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn" id="llmSampleBtn">按概率采样一次</button>
+          <button class="btn ghost sm" id="llmResetBtn">重置</button>
+          <span class="note" style="margin:0" id="llmHint">也可以直接点击某个候选词，强行「选」它</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>为什么它能「无所不知」？</h3>
+        <div class="note" style="margin-top:0">
+          <p><b>预训练：</b>在数万亿 token 的文本上，反复练习「猜下一个词」。为了猜得准，它被迫学会语法、事实、逻辑甚至代码风格。</p>
+          <p><b>自回归生成：</b>每次预测出一个 token，就把它拼回输入末尾，再预测下一个——像接龙一样，一个词一个词把答案写出来。</p>
+          <p><b>上下文窗口：</b>模型的「工作记忆」，一次能装下的 token 上限（如 128K）。你发给它的一切，都在这个窗口里。</p>
+          <p><b>参数量：</b>模型的「脑容量」，从几十亿到上万亿。参数越多，能记住的规律越细腻。</p>
+        </div>
+        <p class="note">小结：LLM 不检索答案、不查数据库，它只是极其擅长「猜下一个 token」——猜着猜着，答案就成形了。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 02 PARAMS ================= -->
+<section id="params">
+  <div class="wrap">
+    <div class="kicker">MODULE 02</div>
+    <h2 class="sec-title">温度与采样：模型的「性格旋钮」</h2>
+    <p class="sec-desc">模型每次输出的都是概率分布，<b style="color:var(--ink)">从分布中抽取哪个词，由采样参数决定</b>。
+      拖动滑块，观察同一句话的候选词概率如何被重新分配，再连按几次采样感受差异。</p>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>采样实验台<span class="tag">LIVE</span></h3>
+        <p style="font-size:14px;margin-bottom:12px">前文：<span style="font-family:var(--mono);color:var(--accent)">我觉得这个想法</span></p>
+        <label class="param-lb"><span>温度 temperature</span><b id="tVal">1.0</b></label>
+        <input type="range" id="tSlider" min="0" max="2" step="0.05" value="1" aria-label="温度">
+        <label class="param-lb"><span>Top-P（核采样）</span><b id="pVal">1.00</b></label>
+        <input type="range" id="pSlider" min="0.05" max="1" step="0.05" value="1" aria-label="Top-P">
+        <div id="paramBars" style="margin-top:16px"></div>
+        <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn" id="paramSampleBtn">采样一次</button>
+          <button class="btn ghost sm" id="paramClearBtn">清空记录</button>
+        </div>
+        <div style="margin-top:12px">
+          <span style="font-size:12px;color:var(--muted)">采样记录：</span>
+          <div id="paramHistory" style="margin-top:6px"></div>
+        </div>
+        <p class="note" id="tempDesc"></p>
+      </div>
+      <div class="card">
+        <h3>推理参数速查表</h3>
+        <table class="params">
+          <tr><th>参数</th><th>作用</th><th>怎么用</th></tr>
+          <tr><td>temperature</td><td>调整分布的「陡峭程度」</td><td>接近 0 稳定刻板；0.7 左右平衡；1.5+ 天马行空</td></tr>
+          <tr><td>top_p</td><td>只在累计概率前 P 的词里采样</td><td>0.9 = 砍掉长尾，防胡言乱语</td></tr>
+          <tr><td>top_k</td><td>只在概率前 K 名里采样</td><td>与 top_p 同类，二选一即可</td></tr>
+          <tr><td>max_tokens</td><td>限制最多生成多少 token</td><td>控制成本与长度</td></tr>
+          <tr><td>stop</td><td>遇到指定字符串就停</td><td>如让模型只输出 JSON</td></tr>
+        </table>
+        <p class="note"><b>比赛经验：</b>写代码、提取信息用低温度（0–0.3）；起名字、想创意、写文案用高温度（0.8–1.2）。
+          长尾怪词多时，加一个 top_p = 0.9 兜底。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 03 TOKEN ================= -->
+<section id="token">
+  <div class="wrap">
+    <div class="kicker">MODULE 03</div>
+    <h2 class="sec-title">Token：模型眼里的文字长什么样</h2>
+    <p class="sec-desc">模型不直接读「字」或「词」，它读 <b style="color:var(--ink)">token</b>——文本切出来的小块。
+      经验值：1 个英文单词 ≈ 1.3 token，1 个汉字 ≈ 1～2 token（不同模型分词器不同）。
+      你的提示词、模型的回答、API 账单，全按 token 计数。输入一句话，看看它被切成什么样。</p>
+
+    <div class="card">
+      <h3>Token 切分实验台<span class="tag">LIVE</span></h3>
+      <textarea id="tkInput" rows="2" aria-label="待切分文本">帮我用Python写一个贪吃蛇小游戏，风格要像素风！</textarea>
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn" id="tkBtn">开始切分</button>
+        <button class="btn ghost sm" id="tkIdBtn">显示 / 隐藏 Token ID</button>
+        <span class="note" style="margin:0" id="tkRatio"></span>
+      </div>
+      <div id="tkOut" style="margin-top:14px;padding:14px;background:#0d1628;border:1px solid var(--line);
+        border-radius:8px;min-height:52px"><span class="tk-empty">点击「开始切分」，看看这句话在模型眼里是什么样子</span></div>
+      <div class="grid4" style="margin-top:16px">
+        <div class="card" style="padding:14px;text-align:center"><b style="font-family:var(--mono);font-size:22px;color:var(--accent)" id="tkChars">0</b><span class="note" style="display:block;margin:0">字符数</span></div>
+        <div class="card" style="padding:14px;text-align:center"><b style="font-family:var(--mono);font-size:22px;color:var(--accent)" id="tkCount">0</b><span class="note" style="display:block;margin:0">token 数（模拟）</span></div>
+        <div class="card" style="padding:14px;text-align:center"><b style="font-family:var(--mono);font-size:22px;color:var(--accent)" id="tkCost">¥0.00</b><span class="note" style="display:block;margin:0">输入费用估算（按 ¥4/百万 token）</span></div>
+        <div class="card" style="padding:14px;text-align:center"><b style="font-family:var(--mono);font-size:22px;color:var(--accent)" id="tkWords">0</b><span class="note" style="display:block;margin:0">≈ 英文单词量</span></div>
+      </div>
+      <p class="note"><b>规则速记：</b>常见英文词整词 1 个 token，长词拆成 2～4 字符的小块；汉字通常 1 字 1 token；
+        空格、标点、换行都占 token。<b>本页为教学模拟</b>——真实分词器（BPE/BBPE）会把高频组合合并，结果略有出入，但量级一致。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 04 PIPELINE ================= -->
+<section id="pipeline">
+  <div class="wrap">
+    <div class="kicker">MODULE 04</div>
+    <h2 class="sec-title">输入 → 模型 → 输出：一次完整的旅程</h2>
+    <p class="sec-desc">你发出去的一段话，经历了「拼对话模板 → 切 token → 模型逐个预测 → 采样 → 解码拼回文字」的完整流水线。
+      模型回答是<b style="color:var(--ink)">一个 token 一个 token 流式吐出来</b>的——所以打字机效果不是装饰，是真实的工作方式。发一条消息，全程围观。</p>
+
+    <div class="psteps" id="psteps">
+      <div class="pstep"><div class="ico">[ ]</div><div class="nm">你的输入</div><div class="en">PROMPT</div></div>
+      <div class="pstep"><div class="ico">{ }</div><div class="nm">拼对话模板</div><div class="en">SYSTEM+USER</div></div>
+      <div class="pstep"><div class="ico">#</div><div class="nm">切分 Token</div><div class="en">TOKENIZE</div></div>
+      <div class="pstep"><div class="ico">▸|</div><div class="nm">模型预测</div><div class="en">TRANSFORMER</div></div>
+      <div class="pstep"><div class="ico">🎲</div><div class="nm">采样</div><div class="en">SAMPLING</div></div>
+      <div class="pstep"><div class="ico">≡</div><div class="nm">解码输出</div><div class="en">DETOKENIZE</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>给模型发一条消息<span class="tag">LIVE</span></h3>
+        <input type="text" id="pipeInput" value="用一句话解释什么是递归" aria-label="消息内容">
+        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="btn" id="pipeSendBtn">发送到模型</button>
+          <label style="font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center">
+            <input type="radio" name="pipeMode" value="text" checked> 自然语言回答
+          </label>
+          <label style="font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center">
+            <input type="radio" name="pipeMode" value="code"> Python 代码回答
+          </label>
+        </div>
+        <div style="margin-top:14px">
+          <p style="font-size:12.5px;color:var(--muted);margin-bottom:6px">实际发送给模型的对话模板（已拼接）：</p>
+          <pre id="pipeTemplate" style="font-family:var(--mono);font-size:12px;background:#0d1628;border:1px solid var(--line);
+  border-radius:8px;padding:10px;white-space:pre-wrap;color:var(--muted);min-height:56px">等待发送…</pre>
+        </div>
+      </div>
+      <div class="card">
+        <h3>模型响应<span class="tag">STREAMING</span></h3>
+        <div class="chat" id="pipeChat" style="min-height:220px">
+          <span class="tk-empty">发送一条消息，围观 token 如何一个个变成文字 / 代码</span>
+        </div>
+        <div class="chat-stats" id="pipeStats"></div>
+      </div>
+    </div>
+    <p class="note" style="margin-top:18px"><b>看懂了吗：</b>同一个流水线，输出文字还是代码，只取决于你把需求描述成什么样——
+      这正是 Vibe Coding 的原理：<b>你负责把需求说清楚，token 流水线负责把它做出来。</b>（页面用预设语料模拟回复，真实模型还会多一轮「猜下一个词」的循环。）</p>
+  </div>
+</section>
+
+<!-- ================= 05 AGENT ================= -->
+<section id="agent">
+  <div class="wrap">
+    <div class="kicker">MODULE 05</div>
+    <h2 class="sec-title">Agent 生态：从「会聊天」到「会干活」</h2>
+    <p class="sec-desc">裸的 LLM 只会「说」；让它「做」，需要一整套装备。<b style="color:var(--ink)">点击卡片</b>查看每个角色的详细分工，
+      再运行下面的智能体循环模拟器，看看一个任务是如何被自主完成的。</p>
+
+    <div class="grid4" id="conceptGrid">
+      <div class="ccard" data-c="agent">
+        <div class="en">AGENT</div><h3>智能体</h3>
+        <p>LLM 当大脑、工具当手脚、循环当心脏：给定目标，自主拆解任务、调用工具、根据反馈调整，直到完成。</p>
+      </div>
+      <div class="ccard" data-c="skill">
+        <div class="en">SKILL</div><h3>技能</h3>
+        <p>打包好的「能力包」：提示词 + 流程 + 示例，让模型在某类任务上更稳更专业。</p>
+      </div>
+      <div class="ccard" data-c="mcp">
+        <div class="en">MCP</div><h3>工具协议</h3>
+        <p>连接模型与外部世界的「USB-C」：数据库、搜索、天气、办公套件，通过统一协议挂载给模型。</p>
+      </div>
+      <div class="ccard" data-c="harness">
+        <div class="en">HARNESS</div><h3>运行框架</h3>
+        <p>智能体的「发动机舱」：驱动循环、投喂工具结果、管理上下文与安全边界的整套运行时。</p>
+      </div>
+    </div>
+    <div class="cdetail" id="cdetail">
+      <div class="t" id="cdTitle"></div>
+      <div id="cdBody"></div>
+    </div>
+
+    <div class="card" style="margin-top:22px">
+      <h3>智能体循环模拟器<span class="tag">LIVE</span></h3>
+      <p style="font-size:14px;color:var(--muted);margin-bottom:14px">
+        任务：「查一下天津今天的天气，如果会下雨就给我写一句带伞提醒」——单步执行，观察 Agent 如何「思考 → 行动 → 观察 → 再思考」。</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn" id="loopStepBtn">下一步</button>
+        <button class="btn ghost" id="loopAutoBtn">自动播放</button>
+        <button class="btn ghost sm" id="loopResetBtn">重置</button>
+        <span class="note" style="margin:0" id="loopStepLabel">共 7 步 · 当前进度 0</span>
+      </div>
+      <div class="loopbox" id="loopBox"></div>
+      <p class="note"><b>关键洞察：</b>对话式 LLM 是「一问一答」；Agent 是「目标 → 多轮循环 → 完成」。
+        黑客松里做出一个能自主查资料、写文件、调用 API 的 Agent，评委一定会眼前一亮。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 06 QUIZ ================= -->
+<section id="quiz">
+  <div class="wrap">
+    <div class="kicker">MODULE 06</div>
+    <h2 class="sec-title">随堂小测：4 道题验收</h2>
+    <p class="sec-desc">全部答对，你就有资格在队里说「参数我来调」。</p>
+    <div id="quizBox"></div>
+    <p id="quizScore"></p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>天津仁爱学院「创熠」AI聚变黑客松 · 赛前培训材料 · 48 小时，从想法到原型</p>
+    <p style="margin-top:6px">把这一页玩一遍，你就是队里最懂大模型的人。祝各位 <b>Build 得开心</b>。</p>
+  </div>
+</footer>
+
+<script>
+/*JS-A*/
+/*JS-B*/
+</script>
+</body>
+</html>
